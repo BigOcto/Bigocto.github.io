@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="一. 简介在Instant App开发中，需要app支持Instant App Links. 本文中，主要介绍其作用，配置必需条件，配置的过程。 二. 作用App Links 本质上是 Deep Link 的一种延伸，我们知道，Deep Link配置在Manifest之后，通过URL打开APP，会提示:  而通过App Links会直接打开APP,免去了提示的过程。 Deep Link 和 APP">
+<meta name="keywords" content="Android,Instant App">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android APP Links 配置">
+<meta property="og:url" content="http://yoursite.com/2017/12/09/Android-APP-Links-配置/index.html">
+<meta property="og:site_name" content="ZhangYu&#39;s Blog">
+<meta property="og:description" content="一. 简介在Instant App开发中，需要app支持Instant App Links. 本文中，主要介绍其作用，配置必需条件，配置的过程。 二. 作用App Links 本质上是 Deep Link 的一种延伸，我们知道，Deep Link配置在Manifest之后，通过URL打开APP，会提示:  而通过App Links会直接打开APP,免去了提示的过程。 Deep Link 和 APP">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://yoursite.com/images/app-links/deep_link_dialog.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/different_deep_app_link.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/associate_website_1.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/associate_website_2.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/website_asset.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/website_json.png">
+<meta property="og:image" content="http://yoursite.com/images/app-links/website_test_success.png">
+<meta property="og:updated_time" content="2018-09-30T09:23:55.922Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android APP Links 配置">
+<meta name="twitter:description" content="一. 简介在Instant App开发中，需要app支持Instant App Links. 本文中，主要介绍其作用，配置必需条件，配置的过程。 二. 作用App Links 本质上是 Deep Link 的一种延伸，我们知道，Deep Link配置在Manifest之后，通过URL打开APP，会提示:  而通过App Links会直接打开APP,免去了提示的过程。 Deep Link 和 APP">
+<meta name="twitter:image" content="http://yoursite.com/images/app-links/deep_link_dialog.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="../../../../images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="../../../../images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="../../../../images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Android APP Links 配置</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="../../../../css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="../../../../css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="../../../../2018/01/17/hello-world/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2017/12/09/Android-APP-Links-配置/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&text=Android APP Links 配置"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&is_video=false&description=Android APP Links 配置"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Android APP Links 配置&body=Check out this article: http://yoursite.com/2017/12/09/Android-APP-Links-配置/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&name=Android APP Links 配置&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一-简介"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-作用"><span class="toc-number">2.</span> <span class="toc-text">二. 作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-配置过程"><span class="toc-number">3.</span> <span class="toc-text">三. 配置过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-生成Manifest-URL-Intent-filter"><span class="toc-number">3.1.</span> <span class="toc-text">1. 生成Manifest URL Intent-filter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-生成-assetLinks-json文件"><span class="toc-number">3.2.</span> <span class="toc-text">2. 生成 assetLinks.json文件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-配置-Domain-Application-ID"><span class="toc-number">3.2.1.</span> <span class="toc-text">2.1 配置 Domain, Application ID:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-生成-assetLinks-json"><span class="toc-number">3.3.</span> <span class="toc-text">2.2 生成 assetLinks.json :</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-将生成的-assetLinks-json-配置网站上"><span class="toc-number">3.4.</span> <span class="toc-text">2.3 将生成的 assetLinks.json 配置网站上:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-测试配置是否生效"><span class="toc-number">3.5.</span> <span class="toc-text">2.4 测试配置是否生效:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-判断是否生效"><span class="toc-number">4.</span> <span class="toc-text">四.判断是否生效</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Android APP Links 配置
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">ZhangYu's Blog</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-12-09T09:01:02.000Z" itemprop="datePublished">2017-12-09</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="../../../../tags/Android/">Android</a>, <a class="tag-link" href="../../../../tags/Instant-App/">Instant App</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>在Instant App开发中，需要app支持<a href="https://developer.android.com/training/app-links/index.html#app-links-vs-deep-links" target="_blank" rel="noopener">Instant App Links</a>. 本文中，主要介绍其作用，配置必需条件，配置的过程。</p>
+<h2 id="二-作用"><a href="#二-作用" class="headerlink" title="二. 作用"></a>二. 作用</h2><p>App Links 本质上是 <a href="https://developer.android.com/training/app-links/deep-linking.html" target="_blank" rel="noopener">Deep Link</a> 的一种延伸，我们知道，Deep Link配置在Manifest之后，通过URL打开APP，会提示:</p>
+<p><img src="/images/app-links/deep_link_dialog.png" height="350"></p>
+<p>而通过App Links会直接打开APP,免去了提示的过程。</p>
+<p>Deep Link 和 APP Links的区别：</p>
+<p><img src="/images/app-links/different_deep_app_link.png"></p>
+<h2 id="三-配置过程"><a href="#三-配置过程" class="headerlink" title="三. 配置过程"></a>三. 配置过程</h2><p>这里要提一个工具，<strong>App Links Assistant</strong>,在Android studio 的tools目录下可以打开，这个工具可以帮助我们快速配置Android App Links，并能生成相应的json文件。相应的<a href="https://developer.android.com/studio/write/app-link-indexing.html" target="_blank" rel="noopener">官方文档</a></p>
+<h3 id="1-生成Manifest-URL-Intent-filter"><a href="#1-生成Manifest-URL-Intent-filter" class="headerlink" title="1. 生成Manifest URL Intent-filter"></a>1. 生成Manifest URL Intent-filter</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">intent-filter</span> <span class="attr">android:autoVerify</span>=<span class="string">"true"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.VIEW"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.BROWSABLE"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">data</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:scheme</span>=<span class="string">"https"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:host</span>=<span class="string">"bigocto.github.io"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>这里需要注意,官方文档中说明，支持定义多个域名指向同一个APP,在Manifest中配置不同的URL，在不同的域名配置json文件，但是，定义多个URL的<intent-filter>，只有每个配置在域名上的json文件都配置成功，APP端测试才能全部生效，有一个URL在域名未配置成功，及时其他的域名配置已成功，APP端测试也会显示全部不生效。</intent-filter></p>
+</blockquote>
+<h3 id="2-生成-assetLinks-json文件"><a href="#2-生成-assetLinks-json文件" class="headerlink" title="2. 生成 assetLinks.json文件"></a>2. 生成 assetLinks.json文件</h3><p>在App Links Assistant下，使用 <strong>associate website</strong>  功能：</p>
+<h4 id="2-1-配置-Domain-Application-ID"><a href="#2-1-配置-Domain-Application-ID" class="headerlink" title="2.1 配置 Domain, Application ID:"></a>2.1 配置 <strong>Domain</strong>, <strong>Application ID</strong>:</h4><p><img src="/images/app-links/associate_website_1.png" height="250"></p>
+<blockquote>
+<p>注意，<strong>Debug</strong>, <strong>Release</strong> 模式下生成的<strong>assetLinks.json</strong>文件，相对应的，只能在相应<strong>Debug</strong>, <strong>Release</strong> 模式上下生成的APK进行调试，模式不同，会无法识别。</p>
+</blockquote>
+<h3 id="2-2-生成-assetLinks-json"><a href="#2-2-生成-assetLinks-json" class="headerlink" title="2.2 生成 assetLinks.json :"></a>2.2 生成 assetLinks.json :</h3><p><img src="/images/app-links/associate_website_2.png" height="250"></p>
+<h3 id="2-3-将生成的-assetLinks-json-配置网站上"><a href="#2-3-将生成的-assetLinks-json-配置网站上" class="headerlink" title="2.3 将生成的 assetLinks.json 配置网站上:"></a>2.3 将生成的 assetLinks.json 配置网站上:</h3><p>配置的地址：Https://<strong>Domin</strong>/.well-known/assetlinks.json</p>
+<p>在github上可以测试，使用直接的github.io域名，将文件配置在该目录下：</p>
+<p><img src="/images/app-links/website_asset.png" height="250"></p>
+<blockquote>
+<p>配置文件，必须配置在Host地址的 /.well-known/目录下，并且，必须支持<strong>HTTPS</strong></p>
+</blockquote>
+<h3 id="2-4-测试配置是否生效"><a href="#2-4-测试配置是否生效" class="headerlink" title="2.4 测试配置是否生效:"></a>2.4 测试配置是否生效:</h3><p>配置完成后，会有一小段时间的延迟，可以先通过打开文件地址：<br>Https://<strong>Domin</strong>/.well-known/assetlinks.json</p>
+<p><img src="/images/app-links/website_json.png" height="150"></p>
+<p>然后，再使用App Links Assistant， 或者 <a href="https://developers.google.com/digital-asset-links/tools/generator" target="_blank" rel="noopener">官方测试网站</a></p>
+<p>网站测试结果：</p>
+<p><img src="/images/app-links/website_test_success.png" height="250"></p>
+<h2 id="四-判断是否生效"><a href="#四-判断是否生效" class="headerlink" title="四.判断是否生效"></a>四.判断是否生效</h2><p>安装打包成的APK后，可使用命令：</p>
+<p>adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d “<a href="https://bigocto.github.io/path/" target="_blank" rel="noopener">https://bigocto.github.io/path/</a>“</p>
+<p>结果如下：</p>
+<ul>
+<li><p>直接启动APP，配置成功。  </p>
+</li>
+<li><p>显示dialog，选择打开的程序，说明<intent-filter>配置成功，但网站配置的json，未生效</intent-filter></p>
+</li>
+<li><p>直接打开浏览器，进入相应的网站，说明<intent-filter>配置未匹配地址。</intent-filter></p>
+</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一-简介"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-作用"><span class="toc-number">2.</span> <span class="toc-text">二. 作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-配置过程"><span class="toc-number">3.</span> <span class="toc-text">三. 配置过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-生成Manifest-URL-Intent-filter"><span class="toc-number">3.1.</span> <span class="toc-text">1. 生成Manifest URL Intent-filter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-生成-assetLinks-json文件"><span class="toc-number">3.2.</span> <span class="toc-text">2. 生成 assetLinks.json文件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-配置-Domain-Application-ID"><span class="toc-number">3.2.1.</span> <span class="toc-text">2.1 配置 Domain, Application ID:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-生成-assetLinks-json"><span class="toc-number">3.3.</span> <span class="toc-text">2.2 生成 assetLinks.json :</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-将生成的-assetLinks-json-配置网站上"><span class="toc-number">3.4.</span> <span class="toc-text">2.3 将生成的 assetLinks.json 配置网站上:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-测试配置是否生效"><span class="toc-number">3.5.</span> <span class="toc-text">2.4 测试配置是否生效:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-判断是否生效"><span class="toc-number">4.</span> <span class="toc-text">四.判断是否生效</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2017/12/09/Android-APP-Links-配置/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&text=Android APP Links 配置"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&is_video=false&description=Android APP Links 配置"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Android APP Links 配置&body=Check out this article: http://yoursite.com/2017/12/09/Android-APP-Links-配置/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&title=Android APP Links 配置"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/12/09/Android-APP-Links-配置/&name=Android APP Links 配置&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 Yu Zhang
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="../../../../lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="../../../../lib/justified-gallery/css/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="../../../../lib/jquery/jquery.min.js"></script>
+<script src="../../../../lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="../../../../js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+

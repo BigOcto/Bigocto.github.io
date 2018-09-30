@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="1.简介互联网领域里有个八秒定律，如果网页打开时间超过8秒，便会有超过70%的用户放弃等待，对Android APP而言，要求更加严格，如果系统无响应时间超过5秒，便会出现ANR，APP可能会被强制关闭，因此，启动时间作为一个重要的性能指标，关系着用户的第一体验。 爱奇艺安卓APP非常重视启动速度的优化，本文将从启动过程，启动时间测量，启动优化，以及后续监控等方面分享我们在启动优化方面积累的经验。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="张宇的博客">
+<meta property="og:url" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/index.html">
+<meta property="og:site_name" content="张宇的博客">
+<meta property="og:description" content="1.简介互联网领域里有个八秒定律，如果网页打开时间超过8秒，便会有超过70%的用户放弃等待，对Android APP而言，要求更加严格，如果系统无响应时间超过5秒，便会出现ANR，APP可能会被强制关闭，因此，启动时间作为一个重要的性能指标，关系着用户的第一体验。 爱奇艺安卓APP非常重视启动速度的优化，本文将从启动过程，启动时间测量，启动优化，以及后续监控等方面分享我们在启动优化方面积累的经验。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/app_launch_process.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/perform_draw.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/ui_thread_color.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/cpu_utilazition_rate.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/thread_duration.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/trace_launch_complete.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/report_fully_drawn_code.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/process_application.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/logcat_time.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/launch_bg_img.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/service_create_time.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/delay_jobs.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/hack_source_build.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/launch_time_systrace_ad.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/launch_time_systrace_no_ad.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/launch_time_adb_8_2.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/launch_time_adb_8_6.png">
+<meta property="og:updated_time" content="2018-07-17T08:39:34.692Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="张宇的博客">
+<meta name="twitter:description" content="1.简介互联网领域里有个八秒定律，如果网页打开时间超过8秒，便会有超过70%的用户放弃等待，对Android APP而言，要求更加严格，如果系统无响应时间超过5秒，便会出现ANR，APP可能会被强制关闭，因此，启动时间作为一个重要的性能指标，关系着用户的第一体验。 爱奇艺安卓APP非常重视启动速度的优化，本文将从启动过程，启动时间测量，启动优化，以及后续监控等方面分享我们在启动优化方面积累的经验。">
+<meta name="twitter:image" content="http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/app_launch_process.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>张宇的博客</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2018/07/17/App-launch-time/App启动时间优化与分析/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2018/07/17/App-launch-time/app-launch-system/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Post Anterior</span>
+      <span id="i-next" class="info" style="display:none;">Post Següent</span>
+      <span id="i-top" class="info" style="display:none;">Adalt</span>
+      <span id="i-share" class="info" style="display:none;">Compartir Post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&text="><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&is_video=false&description="><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&name=&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-简介"><span class="toc-number">1.</span> <span class="toc-text">1.简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-启动模式"><span class="toc-number">2.</span> <span class="toc-text">2.启动模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-启动过程"><span class="toc-number">3.</span> <span class="toc-text">3.启动过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-创建进程"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 创建进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-创建UI线程及Handler"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 创建UI线程及Handler</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-Activity运行及绘制"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 Activity运行及绘制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-分析及测量"><span class="toc-number">4.</span> <span class="toc-text">4.分析及测量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-SysTrace分析技巧"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 SysTrace分析技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-1-UI-Thread-颜色显示"><span class="toc-number">4.1.1.</span> <span class="toc-text">4.1.1 UI Thread 颜色显示</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-2-查看CPU状态及线程运行时长"><span class="toc-number">4.1.2.</span> <span class="toc-text">4.1.2 查看CPU状态及线程运行时长</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-SysTrace启动时间"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 SysTrace启动时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-adb-shell-am-start-W"><span class="toc-number">4.3.</span> <span class="toc-text">4.3 adb shell am start -W</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-埋点"><span class="toc-number">4.4.</span> <span class="toc-text">4.4 埋点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-录屏"><span class="toc-number">4.5.</span> <span class="toc-text">4.5 录屏</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-优化"><span class="toc-number">5.</span> <span class="toc-text">5.优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-区分进程初始化Application"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 区分进程初始化Application</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-异步处理耗时任务"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 异步处理耗时任务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-防止多线程抢占CPU"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 防止多线程抢占CPU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-系统API使用"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 系统API使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-精简布局"><span class="toc-number">5.5.</span> <span class="toc-text">5.5 精简布局</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-Service延后初始化"><span class="toc-number">5.6.</span> <span class="toc-text">5.6 Service延后初始化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-7-将任务delay至首页绘制完成后"><span class="toc-number">5.7.</span> <span class="toc-text">5.7 将任务delay至首页绘制完成后</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-监控"><span class="toc-number">6.</span> <span class="toc-text">6.监控</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-SysTrace扩展"><span class="toc-number">7.</span> <span class="toc-text">7.SysTrace扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#7-1-自动化TAG注入"><span class="toc-number">7.0.1.</span> <span class="toc-text">7.1 自动化TAG注入</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-优化结果"><span class="toc-number">8.</span> <span class="toc-text">8.优化结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-总结"><span class="toc-number">9.</span> <span class="toc-text">9.总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考链接"><span class="toc-number">10.</span> <span class="toc-text">参考链接</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">张宇的博客</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2018-07-17T08:33:05.341Z" itemprop="datePublished">2018-07-17</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h2><p>互联网领域里有个八秒定律，如果网页打开时间超过8秒，便会有超过70%的用户放弃等待，对Android APP而言，要求更加严格，如果系统无响应时间超过5秒，便会出现ANR，APP可能会被强制关闭，因此，启动时间作为一个重要的性能指标，关系着用户的第一体验。</p>
+<p>爱奇艺安卓APP非常重视启动速度的优化，本文将从启动过程，启动时间测量，启动优化，以及后续监控等方面分享我们在启动优化方面积累的经验。</p>
+<h2 id="2-启动模式"><a href="#2-启动模式" class="headerlink" title="2.启动模式"></a>2.启动模式</h2><p>要准确的测量APP的启动时间，首先我们要了解APP整个启动过程。<br>启动过程，一般可以分为以下三类：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>场景</th>
+<th>进程</th>
+<th>生命周期</th>
+<th>启动速度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hot</td>
+<td>最小化</td>
+<td>exist</td>
+<td>onResume</td>
+<td>非常快</td>
+</tr>
+<tr>
+<td>Warm</td>
+<td>退出</td>
+<td>exist</td>
+<td>onCreate-&gt;onStart-&gt;onResume</td>
+<td>快</td>
+</tr>
+<tr>
+<td>Cold</td>
+<td>杀死</td>
+<td>dead</td>
+<td>InitProcess-&gt;BindApplication-&gt;onCreate-&gt;onStart-&gt;onResume</td>
+<td>慢</td>
+</tr>
+</tbody>
+</table>
+<p>从上图可以看出，启动过程中，Cold的模式下，生命周期中做的事情最多，启动的时间最长，因此，我们以冷启动来衡量APP启动时间。那问题来了，启动过程中，如何判断哪些生命周期影响启动速度呢？</p>
+<h2 id="3-启动过程"><a href="#3-启动过程" class="headerlink" title="3.启动过程"></a>3.启动过程</h2><p>我们知道，APP的启动和运行，就是Linux系统创建进程和组件对象，并在<code>UI线程</code>中处理组件消息的过程。</p>
+<p>启动过程图:</p>
+<p><img src="./app_launch_process.png"></p>
+<p>App的启动过程，可以划分为三个阶段:</p>
+<h3 id="3-1-创建进程"><a href="#3-1-创建进程" class="headerlink" title="3.1 创建进程"></a>3.1 创建进程</h3><p>当APP启动时，如果当前app的进程不存在，便会创建新的进程；App主进程启动后，如果启动某个组件，并且该组件设置了<code>android:process</code>属性，组件所运行的进程不存在，也会创建新的进程。<br><code>需要注意的是，如果在启动阶段，初始化的组件中，包含了多个进程，便会创建多次进程，BindApplication操作也会重复执行多次</code></p>
+<h3 id="3-2-创建UI线程及Handler"><a href="#3-2-创建UI线程及Handler" class="headerlink" title="3.2 创建UI线程及Handler"></a>3.2 创建UI线程及Handler</h3><p>进程创建后，会通过反射，执行ActivityThread入口函数,创建Handler，并在当前线程中<code>prepareMainLooper</code>,并在Handler中接收组件的消息，我们来看一下Handler中处理的消息：</p>
+<table>
+<thead>
+<tr>
+<th>消息</th>
+<th>场景  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LAUNCH_ACTIVITY(activityStart)</td>
+<td>启动，执行Activity，onCreate,onStart,onResume</td>
+</tr>
+<tr>
+<td>RELAUNCH_ACTIVITY(activityRestart)</td>
+<td>恢复App,onRestart</td>
+</tr>
+<tr>
+<td>RESUME_ACTIVITY(activityResume)</td>
+<td>恢复Activity,onResume</td>
+</tr>
+<tr>
+<td>BIND_APPLICATION(bindApplication)</td>
+<td>启动，bindApplication</td>
+</tr>
+<tr>
+<td>CREATE_SERVICE(serviceCreate)</td>
+<td>Service创建，onCreate</td>
+</tr>
+<tr>
+<td>BIND_SERVICE(serviceBind)</td>
+<td>Service创建, onBind</td>
+</tr>
+<tr>
+<td>SERVICE_ARGS(serviceStart)</td>
+<td>Service创建, onStart</td>
+</tr>
+<tr>
+<td>LOW_MEMORY(lowMemory)</td>
+<td>内存不足，回收后台程序</td>
+</tr>
+<tr>
+<td>TRIM_MEMORY(trimMemory)</td>
+<td>内存不足，回调</td>
+</tr>
+<tr>
+<td>GC_WHEN_IDLE(GC)</td>
+<td>内存不足，GC</td>
+</tr>
+<tr>
+<td>RECEIVER(broadcastReceiveComp)</td>
+<td>接收广播</td>
+</tr>
+<tr>
+<td>DUMP_HEAP(dump)</td>
+<td>Dump Heap</td>
+</tr>
+</tbody>
+</table>
+<p>sMainThreadHandler中，处理的消息很多，这里只罗列了，可能在启动阶段可能会执行的操作，<br><code>这些操作都是运行在Main Thread中，对启动而言，属于阻塞性的。</code><br>Activity生命周期，自然需要在启动阶段执行，但，对于Service的创建，Trim_memory回调，广播接收等操作，就需要重点考虑，其操作耗时性。</p>
+<h3 id="3-3-Activity运行及绘制"><a href="#3-3-Activity运行及绘制" class="headerlink" title="3.3 Activity运行及绘制"></a>3.3 Activity运行及绘制</h3><p>前两个过程，创建进程和UI线程及Handler，都是由系统决定的，对APP开发者而言，并不能控制其执行时间，在本阶段，执行BindApplication,和Acitivity生命周期，都是可以由开发者自定义。<br>Activity执行到onResume之后，会执行至ViewRootImpl，执行两次performTraversals,第二次traversal操作中，会执行performDraw操作，同时通知RenderThread线程执行绘制.</p>
+<p><img src="./perform_draw.png"></p>
+<p>从启动的三个阶段，我们可以看出，启动启动时间的长短，决定因素在于，主线程中所做事情消耗的时间的多少，所以，我们的优化工作主要集中在，排查主线程中耗时性的工作，并进行合理的优化。可能有个疑问，既然如此，那我所有的初始化操作，全部放在异步线程去执行，这样并不会阻塞UI线程了，仅仅是理论上可行，在实际开发中，首先业务初始化前后是有依赖关系的，其次，Android手机，系统的资源是有限的，过多的异步线程，同样会抢占CPU，主线程执行时间片间隔增大。同样的，内存消耗状态，GC频率，也会影响启动的时间。</p>
+<h2 id="4-分析及测量"><a href="#4-分析及测量" class="headerlink" title="4.分析及测量"></a>4.分析及测量</h2><p>通过上述的源码的解读，我们已经了解了启动过程，以及可能引起启动过慢的原因。接下来介绍一些常用的分析手段及时间测量方法。</p>
+<blockquote>
+<p>启动分析工具，主要使用SysTrace，具体的使用方法，<a href="https://developer.android.com/studio/profile/systrace.html" target="_blank" rel="noopener">请参考官网文档</a>  </p>
+</blockquote>
+<h3 id="4-1-SysTrace分析技巧"><a href="#4-1-SysTrace分析技巧" class="headerlink" title="4.1 SysTrace分析技巧"></a>4.1 SysTrace分析技巧</h3><h4 id="4-1-1-UI-Thread-颜色显示"><a href="#4-1-1-UI-Thread-颜色显示" class="headerlink" title="4.1.1 UI Thread 颜色显示"></a>4.1.1 UI Thread 颜色显示</h4><p><img src="./ui_thread_color.png">  </p>
+<ul>
+<li><font color="green">绿色：Running</font></li>
+<li><font color="black">白色：Sleeping</font></li>
+<li><font color="brown">棕色：Uninterruptible Sleep</font></li>
+<li><font color="orange">橙色：Uninterruptible Sleep - Block I/O</font>
+
+
+</li>
+</ul>
+<p>其中10ms以内的，较短时间的Sleeping状态，不用关注，可能是由于CPU调度的时间片分配间隔引起的；较长时间的Block I/O和Sleep状态，可以确定有阻塞启动的逻辑在这个阶段运行，需要进一步对代码进行分析定位。</p>
+<h4 id="4-1-2-查看CPU状态及线程运行时长"><a href="#4-1-2-查看CPU状态及线程运行时长" class="headerlink" title="4.1.2 查看CPU状态及线程运行时长"></a>4.1.2 查看CPU状态及线程运行时长</h4><p>查看CPU占用状态:</p>
+<center class="half"><br><img src="./cpu_utilazition_rate.png" height="100"><br></center>  
+
+<p>线程执行：</p>
+<center class="half"><br><img src="./thread_duration.png" height="100"><br></center>
+
+<p>通过该阶段密集程度，反映出CPU占用率，也能在一定程度上反映出该阶段执行时间被阻塞情况；线程执行情况统计，可以查看线程执行时间排名，对执行时间较长的子线程进行优化。</p>
+<h3 id="4-2-SysTrace启动时间"><a href="#4-2-SysTrace启动时间" class="headerlink" title="4.2 SysTrace启动时间"></a>4.2 SysTrace启动时间</h3><p>这是通过SysTrace收集到的完成的启动的Trace图：</p>
+<p><img src="./trace_launch_complete.png"></p>
+<p>由图上可以看到，<code>UI Thread</code>中包含了<code>bindApplication</code>,<code>activityStart</code>,<code>traversal</code>等操作，<code>RenderThread</code>中包含<code>DrawFrame</code>等操作。这些TAG节点是源码已经添加的，可参考<code>#3.2</code>中介绍。</p>
+<blockquote>
+<p>Trace上启动时间：从bind至第二次traversal完成，可认为UI第一次绘制完成，启动完成。选中开始点和结束点，可以查看过程消耗的时间。</p>
+</blockquote>
+<h3 id="4-3-adb-shell-am-start-W"><a href="#4-3-adb-shell-am-start-W" class="headerlink" title="4.3 adb shell am start -W"></a>4.3 adb shell am start -W</h3><p>在统计APP启动时间时，系统为我们提供了<code>adb</code>命令,可以输出启动时间<br>源码：<br><img src="./report_fully_drawn_code.png"></p>
+<blockquote>
+<p>TotalTime: 表示新应用启动的耗时，包括新进程的启动和 Activity 的启动，但不包括前一个应用 Activity pause 的耗时</p>
+</blockquote>
+<p>系统在绘制完成后，<code>ActivityManagerService</code>会回调该方法,统计时间不如SysTrace准确，但是能够方便我们通过脚本多次启动测量TotalTime,对比版本间启动时间差异。</p>
+<h3 id="4-4-埋点"><a href="#4-4-埋点" class="headerlink" title="4.4 埋点"></a>4.4 埋点</h3><p>通过APP启动生命周期中，关键位置加入时间点记录，达到测量目的。</p>
+<h3 id="4-5-录屏"><a href="#4-5-录屏" class="headerlink" title="4.5 录屏"></a>4.5 录屏</h3><p>录屏方式收集到的时间，更接近于用户的真实体感。</p>
+<h2 id="5-优化"><a href="#5-优化" class="headerlink" title="5.优化"></a>5.优化</h2><p>在启动的过程中，为了让用户用户在进入APP之后，更快更流畅的使用服务，所以会在启动过程中，提前对一些基础库和组建进行初始化操作，这就意味着系统有限的资源会被抢占，影响启动时间。启动时间的优化，是一个平衡性能和体验的过程。</p>
+<p>通过Systrace工具分析，我们发现爱奇艺爱奇艺安卓APP启动过程中一些问题，接下来，我们就结合具体的业务实践，进行启动问题进行优化。  </p>
+<h3 id="5-1-区分进程初始化Application"><a href="#5-1-区分进程初始化Application" class="headerlink" title="5.1 区分进程初始化Application"></a>5.1 区分进程初始化Application</h3><p>由<code>#3</code>我们了解到，对于一个app而言，App内组件可以运行在不同的进程之中。举个例子：<br>一个APP拥有主进程，插件进程，下载进程三个进程，会在启动阶段创建相应的组件，但只有一个QYApplication继承自系统Application，创建三次进程，QYApplication中attach(),onCreate()方法都会被执行三次。<br>每个进程说需要初始化的内容肯定是不一样的，所以，为了防止资源的浪费，我们需要区分进程，初始化Appcation.</p>
+<p><img src="./process_application.png"></p>
+<blockquote>
+<p>成果：对多进程应用而言，通过对初始化内容进行梳理，合理区分初始化，会大幅减少内存和CPU占用。</p>
+</blockquote>
+<h3 id="5-2-异步处理耗时任务"><a href="#5-2-异步处理耗时任务" class="headerlink" title="5.2 异步处理耗时任务"></a>5.2 异步处理耗时任务</h3><p>子线程处理耗时任务，主线程做的事情越少，越早进入Acitivity绘制阶段，界面越早展现。<br>注意：</p>
+<ul>
+<li>不在主线程做耗时任务，如文件，网络等</li>
+<li>启动阶段初始化任务，尽量在异步线程处理</li>
+<li>主线程，不用等待或者依赖于子线程任务  </li>
+</ul>
+<blockquote>
+<p>进一步优化：可以自建线程池，维持一定线程个数，管理任务队列。</p>
+</blockquote>
+<h3 id="5-3-防止多线程抢占CPU"><a href="#5-3-防止多线程抢占CPU" class="headerlink" title="5.3 防止多线程抢占CPU"></a>5.3 防止多线程抢占CPU</h3><p>Android系统资源有限，特别是CPU资源，理论上来说，UI线程执行的任务，也无法保证一直被调度状态，当并发的线程数过多，UI线程时间片会更短，从而导致启动时间被变慢。  </p>
+<p>下面罗列一些常见，容易造成CPU被抢占的场景：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>执行时间</th>
+<th>执行频率</th>
+<th>策略</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>网络访问</td>
+<td>短</td>
+<td>高</td>
+<td>不重要的网络访问，降低线程优先级</td>
+</tr>
+<tr>
+<td>Log日志</td>
+<td>短</td>
+<td>高</td>
+<td>Release包关掉日志开关，精简日志</td>
+</tr>
+<tr>
+<td>大文件解析</td>
+<td>长</td>
+<td>低</td>
+<td>文件分段解析，尽量不要在启动阶段操作</td>
+</tr>
+<tr>
+<td>大SO库的加载</td>
+<td>长</td>
+<td>低</td>
+<td>选择合适的时机加载</td>
+</tr>
+</tbody>
+</table>
+<p>下面是以Log日志为例，在生命周期中打印多次，trace图如下：<br><img src="./logcat_time.png"><br>从图中看出，高频率的日志，开启<code>logd.writer,log.reader.per</code>两个线程执行日志操作，抢占cpu严重。</p>
+<blockquote>
+<p>成果：通过对执行时间较久，执行频率的业务进行优化，将CPU占有率维持在合理的程度，会大幅减少启动时间，减少300ms以上。</p>
+</blockquote>
+<h3 id="5-4-系统API使用"><a href="#5-4-系统API使用" class="headerlink" title="5.4 系统API使用"></a>5.4 系统API使用</h3><p>部分系统的API使用是阻塞性的，文件很小可能无法感知，当文件过大，或者使用频繁时，可能造成阻塞。例如：</p>
+<ul>
+<li><code>SharedPreference.Editor</code>提交操作：<ol>
+<li><code>commit</code>方法属于属于阻塞性质API，建议使用<code>apply</code>。</li>
+<li>此外，我们知道，SP文件的存储是一个XML文件，以key-value形式存储，当业务过多时，需要拆分为多个文件存储，防止文件过大，出现读取耗时及ANR。</li>
+<li>进一步优化，可对启动阶段，频繁的SP操作在内存中，统一提交。</li>
+</ol>
+</li>
+<li><code>AssetManager.open</code>操作：<br>Android开发中，我们有时会将资源文件放在<code>assets</code>目录中，然后使用open操作读取文件，如果文件过大，需要在异步线程中执行。</li>
+</ul>
+<blockquote>
+<p>成果：随着业务量日积月累，正常的系统API的使用，也可能出现问题，通过排除，可减少50-100ms。</p>
+</blockquote>
+<h3 id="5-5-精简布局"><a href="#5-5-精简布局" class="headerlink" title="5.5 精简布局"></a>5.5 精简布局</h3><p>布局的复杂程度，直接影响绘制的时间。<br>启动阶段，背景图片<code>decodeBitmap</code>:<br><img src="./launch_bg_img.png"><br>举个例子，在启动过程中，会有需要大的背景图，只有第一次安装时使用，后续属性设置为<code>android:visibility=&quot;gone&quot;</code>,但是，虽然设置了<code>gone</code>属性，不会显示，但依旧会被解析。  </p>
+<p>建议：</p>
+<ul>
+<li>减少布局层次</li>
+<li>无用资源使用ViewStub，使用时加载</li>
+</ul>
+<blockquote>
+<p>成果：启动阶段的布局较简单，通过优化背景图片的加载，减少50-100ms。</p>
+</blockquote>
+<h3 id="5-6-Service延后初始化"><a href="#5-6-Service延后初始化" class="headerlink" title="5.6 Service延后初始化"></a>5.6 Service延后初始化</h3><p>App启动中过程中，经常进行<code>Service</code>初始化操作，由于Service使用一般不涉及界面，可能会认为初始化生命周期不在主线程中，其实不然，在<code>3.2</code>的启动过程源码介绍中讲到，Service的生命周期，也属于主线程Handler接收的Message之一。<br>Service启动中初始化SysTrace图：<br> <img src="./service_create_time.png"></p>
+<p>建议：Service生命周期中，注意逻辑执行时间性能优化，初始化尽量延后。</p>
+<blockquote>
+<p>成果：取决于初始化Service的生命周期执行时间，可减少200ms以上。</p>
+</blockquote>
+<h3 id="5-7-将任务delay至首页绘制完成后"><a href="#5-7-将任务delay至首页绘制完成后" class="headerlink" title="5.7 将任务delay至首页绘制完成后"></a>5.7 将任务delay至首页绘制完成后</h3><p>对于APP首页展示不需要的初始化逻辑，可延后至首页绘制完成后初始化。<br>初始化Delay示例：<br><img src="./delay_jobs.png"></p>
+<p>注意：</p>
+<ul>
+<li>需要post两次才能保证在第一次绘制之后显示，因为，系统绘制会执行两次Performtraversal。</li>
+<li>上述操作只能保证第一次绘制后执行，具体业务中，可能首页在多次绘制才能展现完全，需要特殊处理</li>
+</ul>
+<p>进一步优化：可将业务逻辑的初始化划分为，首页绘制后，5s,10s,20s三个阶段分别初始化，防止首页绘制执行任务过多造成掉帧。</p>
+<blockquote>
+<p>成果：释放绘制阶段的CPU，可能绘制提前200ms以上。</p>
+</blockquote>
+<h2 id="6-监控"><a href="#6-监控" class="headerlink" title="6.监控"></a>6.监控</h2><p>稳定的用户体验依赖于持续的监控，爱奇艺为监控启动性能建立了一套监控体系，测试，工具，开发等几个团队从不同的纬度搭建不同的监控方案</p>
+<ul>
+<li>1.<code>测试</code>：录屏，从用户的真实体验角度，获取最准确的启动时间。</li>
+<li>2.<code>实时监控</code>：通过埋点，大数据采样投递获取真实线上环境数据，从地域，时间，机型，app版本，系统版本等各个纬度对启动时间进行监控。</li>
+<li>3.<code>脚本测试</code>：通过对脚本，对同一收集多次启动数据进行收集，通过不同版本间的对比，监控启动时间的变化情况。</li>
+</ul>
+<h2 id="7-SysTrace扩展"><a href="#7-SysTrace扩展" class="headerlink" title="7.SysTrace扩展"></a>7.SysTrace扩展</h2><p>SysTrace通过TAG节点可以清晰展现，启动过程以及方法执行时间，但是，从发现问题，然后通过节点去定位问题，是一件很繁琐的工作，如果你们工程编译又比较慢，简直让人崩溃。</p>
+<h4 id="7-1-自动化TAG注入"><a href="#7-1-自动化TAG注入" class="headerlink" title="7.1 自动化TAG注入"></a>7.1 自动化TAG注入</h4><p>在Android工程编译的过程中，指定class，在方法前后，自动化插入Trace节点，统计方法执行时间。<br>注入逻辑图：<br><img src="./hack_source_build.png"></p>
+<p>流程：</p>
+<ul>
+<li>1.在编译的过程中，插入自定义Task任务，</li>
+<li>2.读取配置文件，文件中包含了需要注入<code>java文件名和路径名</code>和<code>method</code></li>
+<li>3.找到需要注入的class文件，然后通过ASM改变字节码，方法前后，插入自定义自定义方法  </li>
+</ul>
+<p>通过工具的操作，能够做到不用修改原有工程文件，自动在打包时注入TAG节点和逻辑代码，配置文件可以循环利用，提高分析效率，节能环保。</p>
+<h2 id="8-优化结果"><a href="#8-优化结果" class="headerlink" title="8.优化结果"></a>8.优化结果</h2><p>启动时间，由于不同的机型性能同，Android系统版本不同，同一APP版本启动时间，相差很大，所以统计一般以同一手机，不同版本做比较，尽量保证手机状态一致。<br>SysTrace手机优化时间对比：</p>
+<center class="half"><br>  <img src="./launch_time_systrace_ad.png" width="250"><br>  <img src="./launch_time_systrace_no_ad.png" width="250"><br></center>  
+
+<p>脚本多次启动时间收集对比：</p>
+<center class="half"><br>  <img src="./launch_time_adb_8_2.png" width="250"><br>  <img src="./launch_time_adb_8_6.png" width="250"><br></center>
+
+<p>经过多个版本的持续优化，有无广告两种不同的场景下，启动时间分别减少40%和35%，启动速度得到了大幅的提升。</p>
+<h2 id="9-总结"><a href="#9-总结" class="headerlink" title="9.总结"></a>9.总结</h2><p>启动时间的优化和监控，是一项长期的任务，需要对异常的情况进行分析，对可能造成阻塞的代码逻辑进行合理的优化，非常感谢各个业务团队支持和配合。<br>以上就是全部启动时间优化相关的内容，谢谢大家能够阅读到这里，如果有更好的建议，欢迎交流！</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="http://gityuan.com/2016/03/26/app-process-create/" target="_blank" rel="noopener">启动过程链接</a></li>
+<li><a href="https://developer.android.com/guide/components/processes-and-threads.html" target="_blank" rel="noopener">进程和线程</a></li>
+</ul>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-简介"><span class="toc-number">1.</span> <span class="toc-text">1.简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-启动模式"><span class="toc-number">2.</span> <span class="toc-text">2.启动模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-启动过程"><span class="toc-number">3.</span> <span class="toc-text">3.启动过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-创建进程"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 创建进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-创建UI线程及Handler"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 创建UI线程及Handler</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-Activity运行及绘制"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 Activity运行及绘制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-分析及测量"><span class="toc-number">4.</span> <span class="toc-text">4.分析及测量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-SysTrace分析技巧"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 SysTrace分析技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-1-UI-Thread-颜色显示"><span class="toc-number">4.1.1.</span> <span class="toc-text">4.1.1 UI Thread 颜色显示</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-2-查看CPU状态及线程运行时长"><span class="toc-number">4.1.2.</span> <span class="toc-text">4.1.2 查看CPU状态及线程运行时长</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-SysTrace启动时间"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 SysTrace启动时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-adb-shell-am-start-W"><span class="toc-number">4.3.</span> <span class="toc-text">4.3 adb shell am start -W</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-埋点"><span class="toc-number">4.4.</span> <span class="toc-text">4.4 埋点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-录屏"><span class="toc-number">4.5.</span> <span class="toc-text">4.5 录屏</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-优化"><span class="toc-number">5.</span> <span class="toc-text">5.优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-区分进程初始化Application"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 区分进程初始化Application</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-异步处理耗时任务"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 异步处理耗时任务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-防止多线程抢占CPU"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 防止多线程抢占CPU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-系统API使用"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 系统API使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-精简布局"><span class="toc-number">5.5.</span> <span class="toc-text">5.5 精简布局</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-Service延后初始化"><span class="toc-number">5.6.</span> <span class="toc-text">5.6 Service延后初始化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-7-将任务delay至首页绘制完成后"><span class="toc-number">5.7.</span> <span class="toc-text">5.7 将任务delay至首页绘制完成后</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-监控"><span class="toc-number">6.</span> <span class="toc-text">6.监控</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-SysTrace扩展"><span class="toc-number">7.</span> <span class="toc-text">7.SysTrace扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#7-1-自动化TAG注入"><span class="toc-number">7.0.1.</span> <span class="toc-text">7.1 自动化TAG注入</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-优化结果"><span class="toc-number">8.</span> <span class="toc-text">8.优化结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-总结"><span class="toc-number">9.</span> <span class="toc-text">9.总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考链接"><span class="toc-number">10.</span> <span class="toc-text">参考链接</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&text="><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&is_video=false&description="><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&title="><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2018/07/17/App-launch-time/app-launch-systrace/&name=&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menú</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Compartir</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Cap amunt</a>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 Yu Zhang
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
