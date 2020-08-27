@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="1.简介本项目上线前,网络监控只是针对后端服务的监控,但是,对于移动端用户而言,用户手机性能和网络环境复杂,用户的真实体验和后台服务监控之间存在很大差异,因此,我们建立了一套基于用户层面的实时、多维度的网络监控系统,并建立了针对端上的错误率、劫持率、性能评估标准. 2.系统设计根据移动端网络错误的特点,计算错误率时, 将其划分为三类:  网络层错误(错误发生在三次握手,SSL校验,数据传输过程中,">
+<meta name="keywords" content="Android,性能优化,APM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动端APM网络监控及优化">
+<meta property="og:url" content="http://yoursite.com/2020/08/20/移动端APM网络监控及优化/index.html">
+<meta property="og:site_name" content="ZhangYu&#39;s Blog">
+<meta property="og:description" content="1.简介本项目上线前,网络监控只是针对后端服务的监控,但是,对于移动端用户而言,用户手机性能和网络环境复杂,用户的真实体验和后台服务监控之间存在很大差异,因此,我们建立了一套基于用户层面的实时、多维度的网络监控系统,并建立了针对端上的错误率、劫持率、性能评估标准. 2.系统设计根据移动端网络错误的特点,计算错误率时, 将其划分为三类:  网络层错误(错误发生在三次握手,SSL校验,数据传输过程中,">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/http_metrics.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/http_server.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/httpdns.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/bandwidth_averaging.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/ares.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/super_channal.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/super_channal2.png">
+<meta property="og:image" content="http://yoursite.com/images/app-apm-network/change_trend.png">
+<meta property="og:updated_time" content="2020-08-27T06:02:32.315Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动端APM网络监控及优化">
+<meta name="twitter:description" content="1.简介本项目上线前,网络监控只是针对后端服务的监控,但是,对于移动端用户而言,用户手机性能和网络环境复杂,用户的真实体验和后台服务监控之间存在很大差异,因此,我们建立了一套基于用户层面的实时、多维度的网络监控系统,并建立了针对端上的错误率、劫持率、性能评估标准. 2.系统设计根据移动端网络错误的特点,计算错误率时, 将其划分为三类:  网络层错误(错误发生在三次握手,SSL校验,数据传输过程中,">
+<meta name="twitter:image" content="http://yoursite.com/images/app-apm-network/http_metrics.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="../../../../images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="../../../../images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="../../../../images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>移动端APM网络监控及优化</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="../../../../css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="../../../../css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="../../../../2018/06/11/App启动时间优化与分析/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&text=移动端APM网络监控及优化"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&is_video=false&description=移动端APM网络监控及优化"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=移动端APM网络监控及优化&body=Check out this article: http://yoursite.com/2020/08/20/移动端APM网络监控及优化/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&name=移动端APM网络监控及优化&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-简介"><span class="toc-number">1.</span> <span class="toc-text">1.简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-系统设计"><span class="toc-number">2.</span> <span class="toc-text">2.系统设计</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-SDK设计"><span class="toc-number">2.0.1.</span> <span class="toc-text">2.1 SDK设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-后端设计"><span class="toc-number">2.0.2.</span> <span class="toc-text">2.2 后端设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-Web设计"><span class="toc-number">2.0.3.</span> <span class="toc-text">2.3 Web设计</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-优化"><span class="toc-number">3.</span> <span class="toc-text">3.优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-DNS优化"><span class="toc-number">3.0.1.</span> <span class="toc-text">3.1 DNS优化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#3-1-1-三层缓存"><span class="toc-number">3.0.1.1.</span> <span class="toc-text">3.1.1 三层缓存</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-1-1-HTTPDNS"><span class="toc-number">3.0.1.2.</span> <span class="toc-text">3.1.1 HTTPDNS</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-弱网优化"><span class="toc-number">3.0.2.</span> <span class="toc-text">3.2 弱网优化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#3-2-1-弱网模型"><span class="toc-number">3.0.2.1.</span> <span class="toc-text">3.2.1 弱网模型</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-2-2-弱网优化"><span class="toc-number">3.0.2.2.</span> <span class="toc-text">3.2.2 弱网优化</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-网关方案"><span class="toc-number">3.0.3.</span> <span class="toc-text">3.3 网关方案</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-4-超级管道兜底"><span class="toc-number">3.0.4.</span> <span class="toc-text">3.4 超级管道兜底</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-5-合理重试"><span class="toc-number">3.0.5.</span> <span class="toc-text">3.5 合理重试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-6-其他"><span class="toc-number">3.0.6.</span> <span class="toc-text">3.6 其他</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-成果"><span class="toc-number">4.</span> <span class="toc-text">4.成果</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-监控发现具体案例"><span class="toc-number">4.0.1.</span> <span class="toc-text">4.1 监控发现具体案例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-错误率下降趋势"><span class="toc-number">4.0.2.</span> <span class="toc-text">4.2 错误率下降趋势</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-结尾"><span class="toc-number">5.</span> <span class="toc-text">5.结尾</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        移动端APM网络监控及优化
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">ZhangYu's Blog</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2020-08-19T16:00:00.000Z" itemprop="datePublished">2020-08-20</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="../../../../tags/APM/">APM</a>, <a class="tag-link" href="../../../../tags/Android/">Android</a>, <a class="tag-link" href="../../../../tags/性能优化/">性能优化</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h2><p>本项目上线前,网络监控只是针对后端服务的监控,但是,对于移动端用户而言,用户手机性能和网络环境复杂,用户的真实体验和后台服务监控之间存在很大差异,因此,我们建立了一套基于用户层面的实时、多维度的网络监控系统,并建立了针对端上的错误率、劫持率、性能评估标准.</p>
+<h2 id="2-系统设计"><a href="#2-系统设计" class="headerlink" title="2.系统设计"></a>2.系统设计</h2><p>根据移动端网络错误的特点,计算错误率时, 将其划分为三类:</p>
+<ul>
+<li>网络层错误(错误发生在三次握手,SSL校验,数据传输过程中,如ConnectException)</li>
+<li>HTTP响应错误(服务端已明确返回错误码,如404)</li>
+<li>解析错误(服务端返回200,但是,数据格式有问题,导致前端无法正确解析)</li>
+</ul>
+<blockquote>
+<p>由于重试机制的存在,我们为每次重试都分配了唯一的TraceId,这一组的重试数据,拥有一个统一SessionId.同时,在计算错误率时,我们只按照一组数据中的最后一次请求的结果,评判该次用户网络行为成功或者失败.</p>
+</blockquote>
+<p>维度信息设计:<br><img src="/images/app-apm-network/http_metrics.png"></p>
+<p>在后端存储的字段里,除了上述网络字段,还包括APM平台和用户设备的基础字段信息,这里就不一一赘述.</p>
+<h4 id="2-1-SDK设计"><a href="#2-1-SDK设计" class="headerlink" title="2.1 SDK设计"></a>2.1 SDK设计</h4><p>端上网络请求频繁,数据采样需要考虑对手机性能影响,同时,也要保证数据的准确可分析,我们采样的措施有:</p>
+<ul>
+<li><strong>云控采样</strong> 云控下发采样指令,一次启动至退出作为采样单元,动态控制数据量</li>
+<li><strong>合并压缩</strong> 网络行为产生的数据,会进行缓存,在达到时间或者数量的阈值时,进行投递,投递时进行批量压缩投递</li>
+<li><strong>失败重投</strong> 投递失败的数据,会进行本地存储,下次启动尝试投递</li>
+</ul>
+<blockquote>
+<p>由于数据投递可能滞后,分析时,可使用1.端上发生时间2.投递到达后端时间,两个时间戳进行查询分析</p>
+</blockquote>
+<h4 id="2-2-后端设计"><a href="#2-2-后端设计" class="headerlink" title="2.2 后端设计"></a>2.2 后端设计</h4><p>在后端系统设计中,需要支持高数据实时性、较大的存储数据量、灵活的查询和准确及时的报警。具体措施有:</p>
+<ul>
+<li><strong>实时性</strong> 采样Spark Streaming实时消费kafka数据</li>
+<li><strong>存储</strong> 存储主要使用Elastic Search(ES).但是,由于ES对资源消耗比较大,<br>我们使用Hbase存储日志性字段信息,使用Druid进行全量的指标统计.</li>
+<li><strong>报警</strong> 我们采用同环比和固定阈值的方式进行报警,具体报警粒度为<code>platform+version+host+path</code>,通过订阅,可及时将相关线上问题,通过<code>邮件、短信、热聊、电话</code>等形式通知责任人.收到报警信息后,可通过APM Web平台,查看详细的报错信息.</li>
+</ul>
+<p><img src="/images/app-apm-network/http_server.png"></p>
+<h4 id="2-3-Web设计"><a href="#2-3-Web设计" class="headerlink" title="2.3 Web设计"></a>2.3 Web设计</h4><p>Web展现错误率监控时,主要考虑是:  </p>
+<ol>
+<li>快速查看整体状态  </li>
+<li>查看所有业务<code>错误数/错误率/请求数</code>的top列表  </li>
+<li>可分析具体原因;  </li>
+</ol>
+<p>基于上述三个基本出发点,我们设计的页面有:</p>
+<ul>
+<li><strong>首页</strong> 首页拥有<code>错误率曲线和中国地图</code>,分别展示实时整体和各省的网络错误率状态</li>
+<li><strong>错误分布</strong> 将Host+path的组合,进行<code>错误数/错误率/请求数</code>进行排列,可自由按照三个维度进行正倒序排列</li>
+<li><p><strong>占比详情</strong> 属于整体的聚合数据,将选中的某个请求的错误信息进行聚合,以饼图展现,包括地区运营商、服务器IP、错误码、版本等</p>
+<blockquote>
+<p>排查问题时,如果错误码集中,可以判断具体错误类型; 如果服务器IP集中,可以判断出问题的服务器信息.</p>
+</blockquote>
+</li>
+<li><p><strong>详情信息</strong> 单个请求信息,详情信息里包含了所有的信息,包括维度信息和日志型信息,用于分析单个请求的具体信息.</p>
+</li>
+</ul>
+<p>除了错误率页面,还有耗时分析和劫持分析, 耗时分析用于查询请求总体及各阶段耗时信息,劫持分析用于查询具体请求的劫持情况.</p>
+<h2 id="3-优化"><a href="#3-优化" class="headerlink" title="3.优化"></a>3.优化</h2><p>网络监控和标准建立完成后,我们又引入一些优化方案,对错误率/劫持率/性能进行了优化.</p>
+<h4 id="3-1-DNS优化"><a href="#3-1-DNS优化" class="headerlink" title="3.1 DNS优化"></a>3.1 DNS优化</h4><p>在HTTP协议里,DNS作用是解析出正确的IP地址,网络请求首先进行DNS解析,然后根据IP进行后续流程,所以,DNS优化很关键.</p>
+<p>DNS优化主要从以下几个点考虑优化:</p>
+<ul>
+<li><strong>DNS劫持</strong> 在移动请求里,劫持指的是运营商DNS服务器被攻击,域名解析时返回了错误的IP地址,导致请求失败</li>
+<li><strong>DNS TTL过长</strong> TTL即域名解析记录在DNS服务器缓存时间.各地运营商DNS TTL时间也不尽相同,有些偏远地区TTL时间过长,可能导致两个问题:<br>1.公司正常下线了某些服务器,运营商可能长时间未更新缓存<br>2.后台服务故障,需要及时更新服务器列表</li>
+<li><strong>跨运营商</strong> 跨运营商可能导致访问慢</li>
+<li><strong>LocalDNS获取失败</strong> 在网络较差或者特殊情况下,LocalDNS信息可能获取失败或者时间过长</li>
+</ul>
+<p>综上,我们优化措施有:</p>
+<h5 id="3-1-1-三层缓存"><a href="#3-1-1-三层缓存" class="headerlink" title="3.1.1 三层缓存"></a>3.1.1 三层缓存</h5><p>建立内存+网络+本地持久化的三层缓存机制,内存缓存设置一定的时效,网络不通时,会使用本地的持久化缓存,好处在于:</p>
+<ol>
+<li>快速获取域名DNS解析信息</li>
+<li>网络较差或者获取LocalDNS失败时,可以从尝试本地获取结果</li>
+<li>可记录上次请求时,成功的IP,会记录其成功率和性能数据,下次重建连接,优先使用上次成功率较高,性能较好的IP</li>
+</ol>
+<h5 id="3-1-1-HTTPDNS"><a href="#3-1-1-HTTPDNS" class="headerlink" title="3.1.1 HTTPDNS"></a>3.1.1 HTTPDNS</h5><p>HTTPDNS是业内比较完善DNS优化方案,通过HTTPS请求,主动去自己的基础平台拉取域名对应的IP信息,好处也显而易见</p>
+<ol>
+<li>防劫持,由于接口存在于自己后台,不存在运营商劫持问题</li>
+<li>高时效,如果后台服务ip有更新,可以立刻更新上线,解决了运营商TTL问题</li>
+<li>结果最优,HTTPDNS可以根据当前后台服务状况,选择最优的IP排序返回</li>
+</ol>
+<p>上线后,观察到劫持率下降了80%.<br><img src="/images/app-apm-network/httpdns.png"></p>
+<blockquote>
+<p>在使用HTTPDNS时,同时设计了降级方案,如果HTTPDNS不可用,会降级为LocalDNS;HTTPDNS同时也存在时效性,设计有超时机制,并且在网络环境改变时,会主动更新.</p>
+</blockquote>
+<h4 id="3-2-弱网优化"><a href="#3-2-弱网优化" class="headerlink" title="3.2 弱网优化"></a>3.2 弱网优化</h4><p>移动端上网络环境复杂,用户随时可能处于弱网环境下,为了保证用户体验,需要在弱网环境下进行特殊优化</p>
+<h5 id="3-2-1-弱网模型"><a href="#3-2-1-弱网模型" class="headerlink" title="3.2.1 弱网模型"></a>3.2.1 弱网模型</h5><p>首先,需要进行弱网判断,甄别出用户当前所处的网络状况</p>
+<p><strong>计算标准:</strong></p>
+<p>网络流畅分级模型,参考了多个维度数据,包括<code>上行/下行网速、请求失败率、网络延迟</code>等.针对不同维度的因素,设置不同天阈值,综合多个网络因素等级,最终确认整体网络等级.目前策略里,只要有一个因素落在<code>VERY_POOR，POOR</code>区间，则认为是弱网环境</p>
+<p><strong>等级划分:</strong></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>取值</th>
+<th>网络状况说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VERY_POOR</td>
+<td>0</td>
+<td>非常差</td>
+<td></td>
+</tr>
+<tr>
+<td>POOR</td>
+<td>1</td>
+<td>较差</td>
+<td></td>
+</tr>
+<tr>
+<td>MODERATE</td>
+<td>2</td>
+<td>一般</td>
+<td></td>
+</tr>
+<tr>
+<td>GOOD</td>
+<td>3</td>
+<td>较好</td>
+<td></td>
+</tr>
+<tr>
+<td>EXCELLENT</td>
+<td>4</td>
+<td>非常好</td>
+<td></td>
+</tr>
+<tr>
+<td>UNKNOWN</td>
+<td>5</td>
+<td>未知</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>根据网速值,划分为六个等级,网络状态会投递至后端,判断时,在value&lt;=1,表示弱网</p>
+</blockquote>
+<p>前端计算的网速数据波动比较大,所以,我们参考facebook方案,对网速数据进行了处理, 归一化后的拟合效果:</p>
+<p><img src="/images/app-apm-network/bandwidth_averaging.png"></p>
+<h5 id="3-2-2-弱网优化"><a href="#3-2-2-弱网优化" class="headerlink" title="3.2.2 弱网优化"></a>3.2.2 弱网优化</h5><p>在建立好弱网模型后,我们又进行了一系列的优化,包括:</p>
+<ul>
+<li><strong>Brotli压缩</strong> Brotli相对Gzip压缩效率提高17-25%,不过由于其更耗服务端资源,前后台约定,会在弱网下使用Brotli压缩</li>
+<li><strong>减小并发</strong> 网络库中,存在网络请求线程池,弱网下,减小并发数</li>
+<li><strong>建立优先级</strong> 重要域名使用优先级更高线程池处理</li>
+<li><strong>减少响应数据</strong> 对返回数据大小进行缩减,比如,页面相关的,减少分页数,减少card数</li>
+</ul>
+<h4 id="3-3-网关方案"><a href="#3-3-网关方案" class="headerlink" title="3.3 网关方案"></a>3.3 网关方案</h4><p>Ares网关方案,通过后台一个中转服务,分发请求,端上所有请求都复用现有的长连接,相当于间接实现了域名收敛.</p>
+<p>相对正常Http请求,其优势有:</p>
+<ol>
+<li>多域名连接共享，实现0RTT多路复用</li>
+<li>避免了DNS解析，防止DNS劫持</li>
+<li>protobuf编码私有协议,节省流量</li>
+</ol>
+<blockquote>
+<p>在一个接口上A/B实验的结果看, 平均请求耗时从595ms降低至371ms,成功率也有所提升</p>
+</blockquote>
+<p>网络架构图:<br><img src="/images/app-apm-network/ares.png"></p>
+<h4 id="3-4-超级管道兜底"><a href="#3-4-超级管道兜底" class="headerlink" title="3.4 超级管道兜底"></a>3.4 超级管道兜底</h4><p>公司自研的基于HTTP网关的代理服务<br>前端:通过一个统一的域名进行请求,使用该服务的请求,可以将其请求信息,作为参数拼接在统一的请求里<br>后端:通过中转服务,将不同的请求分发,并且,会进行异地容灾分发,减小单个地区服务器故障造成的影响</p>
+<p>在一次线上故障时,使用超级管道的接口错误率3.95%,未使用的错误率高达28.96%<br><img src="/images/app-apm-network/super_channal.png"><br><img src="/images/app-apm-network/super_channal2.png"></p>
+<h4 id="3-5-合理重试"><a href="#3-5-合理重试" class="headerlink" title="3.5 合理重试"></a>3.5 合理重试</h4><p>对于用户而已,需要最终的成功的结果,所以,请求失败后,内部进行重试是十分有必要的,一定的重试,可以有效降低错误率.<br>我们使用的重试策略有:</p>
+<ul>
+<li><strong>原样重试</strong>, 业务方可配置重试次数, 防止网络波动引起的请求失败</li>
+<li><strong>HTTPS降级重试</strong>, 如HTTS降级为HTTP重试, 防止SSLException导致的请求失败</li>
+<li><strong>HTTP2.0降级重试</strong> 网络状况较好时,HTTP2.0多路复用,带来了性能上优势,但在网络不稳定时,HTTP1.1错误率低于HTTP2.0</li>
+<li><strong>IP直连重试</strong>, 直接进行IP直连,防止域名解析导致的错误</li>
+<li><strong>超级管道重试</strong>, 利用超级管道,进行兜底重试,防止单个机房故障,进行异地容灾</li>
+</ul>
+<h4 id="3-6-其他"><a href="#3-6-其他" class="headerlink" title="3.6 其他"></a>3.6 其他</h4><ul>
+<li><strong>竞速连接</strong> 对于重要域名,使用TCP连接进行测试,选择最优的IP</li>
+<li><strong>TLS1.3</strong> TLS1.3相较之前版本,由2RTT降低为1RTT,降低了SSL握手失败的概率.</li>
+<li><strong>连接优化</strong> 预建连接，连接重建，备用/复合连接</li>
+</ul>
+<h2 id="4-成果"><a href="#4-成果" class="headerlink" title="4.成果"></a>4.成果</h2><h4 id="4-1-监控发现具体案例"><a href="#4-1-监控发现具体案例" class="headerlink" title="4.1 监控发现具体案例"></a>4.1 监控发现具体案例</h4><p><strong>案例1: 端上无限重试</strong></p>
+<p>灰度期间,播放记录接口,在极少数被劫持情况,证书被替换,导致触发SSLException,网络库的配置默认降级为<br>HTTP请求,但是业务方云控不允许使用HTTP,于是,引起了无限重试,导致单个用户短时间会上传几万条错误信息.</p>
+<blockquote>
+<p>如果没有端上网络监控,类似这类偶发问题,是非常难复现和定位解决的.在APM上,我们首先通过报警提醒问题,再通过查询聚合信息缩小问题范围,最后通过详情信息解决问题.</p>
+</blockquote>
+<p><strong>案例2: 后端机房故障</strong></p>
+<p>后端武汉某个机房,上线新服务,但是,qlb健康检查失败 摘除了武汉所有前置机,但是后端没有第一时间发现该问题.APM及时进行了报警,并通知后台同学进行了处理.</p>
+<blockquote>
+<p>后端服务链路复杂,可能出现报警遗漏.但是APM是基于用户真实体验,能够代表用户当前真实的网络请求状态</p>
+</blockquote>
+<h4 id="4-2-错误率下降趋势"><a href="#4-2-错误率下降趋势" class="headerlink" title="4.2 错误率下降趋势"></a>4.2 错误率下降趋势</h4><p>爱奇艺APP的错误率,随着版本的持续优化,Android从最初5.3%,目前稳定在0.48%; IOS从最初4.63%,目前稳定在0.35%.<br><img src="/images/app-apm-network/change_trend.png"></p>
+<h2 id="5-结尾"><a href="#5-结尾" class="headerlink" title="5.结尾"></a>5.结尾</h2><p>网络监控系统上线后,已落地爱奇艺APP各端,随刻、电影票、奇秀等独立APP. 经过多个部门的合作,使爱奇艺APP错误率有了较大幅度下降,并建立日常问题监控体系,为爱奇艺APP网络质量保驾护航.</p>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-简介"><span class="toc-number">1.</span> <span class="toc-text">1.简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-系统设计"><span class="toc-number">2.</span> <span class="toc-text">2.系统设计</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-SDK设计"><span class="toc-number">2.0.1.</span> <span class="toc-text">2.1 SDK设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-后端设计"><span class="toc-number">2.0.2.</span> <span class="toc-text">2.2 后端设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-Web设计"><span class="toc-number">2.0.3.</span> <span class="toc-text">2.3 Web设计</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-优化"><span class="toc-number">3.</span> <span class="toc-text">3.优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-DNS优化"><span class="toc-number">3.0.1.</span> <span class="toc-text">3.1 DNS优化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#3-1-1-三层缓存"><span class="toc-number">3.0.1.1.</span> <span class="toc-text">3.1.1 三层缓存</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-1-1-HTTPDNS"><span class="toc-number">3.0.1.2.</span> <span class="toc-text">3.1.1 HTTPDNS</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-弱网优化"><span class="toc-number">3.0.2.</span> <span class="toc-text">3.2 弱网优化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#3-2-1-弱网模型"><span class="toc-number">3.0.2.1.</span> <span class="toc-text">3.2.1 弱网模型</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-2-2-弱网优化"><span class="toc-number">3.0.2.2.</span> <span class="toc-text">3.2.2 弱网优化</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-网关方案"><span class="toc-number">3.0.3.</span> <span class="toc-text">3.3 网关方案</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-4-超级管道兜底"><span class="toc-number">3.0.4.</span> <span class="toc-text">3.4 超级管道兜底</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-5-合理重试"><span class="toc-number">3.0.5.</span> <span class="toc-text">3.5 合理重试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-6-其他"><span class="toc-number">3.0.6.</span> <span class="toc-text">3.6 其他</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-成果"><span class="toc-number">4.</span> <span class="toc-text">4.成果</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-监控发现具体案例"><span class="toc-number">4.0.1.</span> <span class="toc-text">4.1 监控发现具体案例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-错误率下降趋势"><span class="toc-number">4.0.2.</span> <span class="toc-text">4.2 错误率下降趋势</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-结尾"><span class="toc-number">5.</span> <span class="toc-text">5.结尾</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&text=移动端APM网络监控及优化"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&is_video=false&description=移动端APM网络监控及优化"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=移动端APM网络监控及优化&body=Check out this article: http://yoursite.com/2020/08/20/移动端APM网络监控及优化/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&title=移动端APM网络监控及优化"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2020/08/20/移动端APM网络监控及优化/&name=移动端APM网络监控及优化&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 Yu Zhang
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="../../../../index.html">Home</a></li>
+         
+          <li><a href="../../../../about/">About</a></li>
+         
+          <li><a href="../../../../archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/bigocto">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="../../../../lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="../../../../lib/justified-gallery/css/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="../../../../lib/jquery/jquery.min.js"></script>
+<script src="../../../../lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="../../../../js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
